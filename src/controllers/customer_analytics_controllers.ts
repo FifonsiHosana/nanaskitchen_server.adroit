@@ -272,6 +272,7 @@ export const getTopCustomers = async (req: Request, res: Response) => {
     const [rows, countResult] = await Promise.all([
       db
         .select({
+          id: orderUserDetail.id,
           email: orderUserDetail.email,
           firstName: orderUserDetail.firstName,
           lastName: orderUserDetail.lastName,
@@ -284,6 +285,7 @@ export const getTopCustomers = async (req: Request, res: Response) => {
         .where(and(...conditions))
 
         .groupBy(
+          orderUserDetail.id,
           orderUserDetail.email,
           orderUserDetail.firstName,
           orderUserDetail.lastName,

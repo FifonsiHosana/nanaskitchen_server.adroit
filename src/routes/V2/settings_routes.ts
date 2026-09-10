@@ -10,17 +10,18 @@ import {
   updateCountry,
   deleteCountry,
 } from "../../controllers/V2/settingsController";
+import { audit } from "../../middleware/audit_middleware";
 
 // Currency routes
 router.get("/currencies", getAllCurrencies);
-router.post("/currencies", createCurrency);
-router.put("/currencies/:id", updateCurrency);
-router.delete("/currencies/:id", deleteCurrency);
+router.post("/currencies", audit("currency.create"), createCurrency);
+router.put("/currencies/:id", audit("currency.update"), updateCurrency);
+router.delete("/currencies/:id", audit("currency.delete"), deleteCurrency);
 
 // Country routes
 router.get("/countries", getAllCountries);
-router.post("/countries", createCountry);
-router.put("/countries/:id", updateCountry);
-router.delete("/countries/:id", deleteCountry);
+router.post("/countries", audit("country.create"), createCountry);
+router.put("/countries/:id", audit("country.update"), updateCountry);
+router.delete("/countries/:id", audit("country.delete"), deleteCountry);
 
 export default router;

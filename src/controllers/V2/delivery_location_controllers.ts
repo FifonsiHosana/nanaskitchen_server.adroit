@@ -6,11 +6,28 @@ import {
   removeDeliveryLocation,
   updateDeliveryLocation,
 } from "../../services/V2/delivery_location_service";
+import { deliveryLocation } from "../../../db";
+import { like } from "drizzle-orm";
+import { totalCount } from "../../db/queries/delivery_location_queries";
 
 export const getDeliveryLocations = async (req: Request, res: Response) => {
+  const {
+    // limit = "5",
+    page = "1",
+    pageSize = "5",
+    search = "",
+  } = req.query as Record<string, string>;
+  const conditions = [];
+  if (search) {
+    conditions.push(like(deliveryLocation.location, `%${search}%`));
+  }
   try {
-    const locations = await listDeliveryLocations();
-    res.status(200).json({ locations });
+    const [locations, total] = await Promise.all([
+      listDeliveryLocations(page, pageSize, conditions),
+      totalCount(conditions),
+    ]);
+
+    res.status(200).json({ locations, total });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch delivery locations" });
   }

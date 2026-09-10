@@ -8,6 +8,7 @@ import {
   getAvgOrderValue,
   getRevenueByCountryOverTime,
   getOrdersByCountry,
+  getTopDeliveryLocations,
 } from "../../controllers/sales_analytics_controllers";
 import {
   getCustomerSegments,
@@ -27,38 +28,138 @@ import {
   deleteQuestion,
   getFeedbackAnswersAnalytics,
 } from "../../controllers/feedback_questions_controllers";
+import { requirePermission } from "../../middleware/permission_middleware";
+import { audit } from "../../middleware/audit_middleware";
 
 const router = Router();
 
 // sales
-router.get("/sales/revenue", getRevenueOverTime);
-router.get("/sales/top-products", getTopProducts);
-router.get("/customer/feedback", getCustomerFeedback);
-router.get("/customer/feedback-answers", getFeedbackAnswersAnalytics);
+router.get(
+  "/sales/revenue",
+  requirePermission("analytics", "see"),
+  getRevenueOverTime,
+);
+router.get(
+  "/sales/top-products",
+  requirePermission("analytics", "see"),
+  getTopProducts,
+);
+
+router.get(
+  "/sales/delivery-locations",
+  requirePermission("analytics", "see"),
+  getTopDeliveryLocations,
+);
+
+router.get(
+  "/customer/feedback",
+  requirePermission("analytics", "see"),
+  getCustomerFeedback,
+);
+router.get(
+  "/customer/feedback-answers",
+  requirePermission("analytics", "see"),
+  getFeedbackAnswersAnalytics,
+);
 
 // Feedback question management
-router.get("/feedback-questions", listQuestions);
-router.post("/feedback-questions", createQuestion);
-router.patch("/feedback-questions/:id", updateQuestion);
-router.delete("/feedback-questions/:id", deleteQuestion);
+router.get(
+  "/feedback-questions",
+  requirePermission("feedback", "see"),
+  listQuestions,
+);
+router.post(
+  "/feedback-questions",
+  audit("feedback.create"),
+  requirePermission("feedback", "edit"),
+  createQuestion,
+);
+router.patch(
+  "/feedback-questions/:id",
+  audit("feedback.update"),
+  requirePermission("feedback", "edit"),
+  updateQuestion,
+);
+router.delete(
+  "/feedback-questions/:id",
+  audit("feedback.delete"),
+  requirePermission("feedback", "delete"),
+  deleteQuestion,
+);
 
-router.get("/sales/by-country", getSalesByCountry);
-router.get("/sales/by-product", getRevenueByProduct);
-router.get("/sales/order-status", getOrderStatusBreakdown);
-router.get("/sales/avg-order-value", getAvgOrderValue);
-router.get("/sales/revenue-by-country", getRevenueByCountryOverTime);
-router.get("/sales/order-country", getOrdersByCountry);
+router.get(
+  "/sales/by-country",
+  requirePermission("analytics", "see"),
+  getSalesByCountry,
+);
+router.get(
+  "/sales/by-product",
+  requirePermission("analytics", "see"),
+  getRevenueByProduct,
+);
+router.get(
+  "/sales/order-status",
+  requirePermission("analytics", "see"),
+  getOrderStatusBreakdown,
+);
+router.get(
+  "/sales/avg-order-value",
+  requirePermission("analytics", "see"),
+  getAvgOrderValue,
+);
+router.get(
+  "/sales/revenue-by-country",
+  requirePermission("analytics", "see"),
+  getRevenueByCountryOverTime,
+);
+router.get(
+  "/sales/order-country",
+  requirePermission("analytics", "see"),
+  getOrdersByCountry,
+);
 
 // customers
-router.get("/customers/segments", getCustomerSegments);
-router.get("/customers/top", getTopCustomers);
-router.get("/customers/satisfaction", getCustomerSatisfaction);
-router.get("/customers/reviews", getRecentReviews);
-router.get("/customers/repeat-rate", getRepeatPurchaseRate);
-router.get("/customers/country-distribution", getCustomerCountryDistribution);
-router.get("/customers/orders-distribution", getOrdersPerCustomerDistribution);
+router.get(
+  "/customers/segments",
+  requirePermission("analytics", "see"),
+  getCustomerSegments,
+);
+router.get(
+  "/customers/top",
+  requirePermission("analytics", "see"),
+  getTopCustomers,
+);
+router.get(
+  "/customers/satisfaction",
+  requirePermission("analytics", "see"),
+  getCustomerSatisfaction,
+);
+router.get(
+  "/customers/reviews",
+  requirePermission("analytics", "see"),
+  getRecentReviews,
+);
+router.get(
+  "/customers/repeat-rate",
+  requirePermission("analytics", "see"),
+  getRepeatPurchaseRate,
+);
+router.get(
+  "/customers/country-distribution",
+  requirePermission("analytics", "see"),
+  getCustomerCountryDistribution,
+);
+router.get(
+  "/customers/orders-distribution",
+  requirePermission("analytics", "see"),
+  getOrdersPerCustomerDistribution,
+);
 
 //website
-router.get("/website", getWebsiteAnalytics);
+router.get(
+  "/website",
+  requirePermission("analytics", "see"),
+  getWebsiteAnalytics,
+);
 
 export default router;

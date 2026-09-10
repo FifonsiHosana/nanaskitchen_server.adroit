@@ -73,6 +73,7 @@ const authMiddleware = async (
       process.env.JWT_SECRET as string,
     ) as CustomJwtPayload;
     req.userId = decoded.id;
+    req.roleId = decoded.roleId;
     next();
   } catch {
     return res.status(401).send("Invalid or expired access token."); // 401 triggers the axios interceptor

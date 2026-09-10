@@ -1,5 +1,10 @@
 import { and, desc, eq, or, sql } from "drizzle-orm";
-import { order, orderCartItem, orderUserDetail } from "../../db/schema";
+import {
+  deliveryLocation,
+  order,
+  orderCartItem,
+  orderUserDetail,
+} from "../../db/schema";
 import { db } from "../models/db_connection";
 import { Request, Response } from "express";
 import {
@@ -49,28 +54,46 @@ const periodError = (res: Response) =>
 export const getRevenueOverTime = async (req: Request, res: Response) => {
   try {
     const { period, from, to, currency, pgId } = parsePeriodAndCurrency(req);
-    const groupFormat =
-      from || to
-        ? getCustomGroupFormat(from, to)
-        : getGroupFormat(period as Period);
-    // if (!validatePeriod(period)) return periodError(res);
-    const dateCondition = buildDateFilter(
-      {
-        period,
-        ...(from && { from }),
-        ...(to && { to }),
-      },
-      order.createdAt,
-    );
 
-    const conditions: any[] = [
+    // Filters that don't depend on date — reused both for the min-date probe
+    // and the main query.
+    const baseConditions: any[] = [
       eq(order.deletedMode, false),
       or(eq(order.status, "completed"), eq(order.status, "delivered")),
-      // getPeriodCondition(period as Period, order.createdAt),
     ];
-    if (dateCondition) conditions.push(dateCondition);
-    if (currency) conditions.push(sql`${derivedCurrency} = ${currency}`);
-    if (pgId) conditions.push(eq(order.pricingGroupId, pgId));
+    if (currency) baseConditions.push(sql`${derivedCurrency} = ${currency}`);
+    if (pgId) baseConditions.push(eq(order.pricingGroupId, pgId));
+
+    let groupFormat: string;
+
+    if (from || to) {
+      groupFormat = getCustomGroupFormat(from, to);
+    } else if (period === "all_time") {
+      // "All time" has no fixed span — bucket size should reflect how much
+      // history actually exists, not a hardcoded yearly assumption.
+      const minDateRow = (
+        await db
+          .select({ minDate: sql<string>`MIN(${order.createdAt})` })
+          .from(order)
+          .innerJoin(orderUserDetail, eq(orderUserDetail.orderId, order.id))
+          .where(and(...baseConditions))
+      )[0];
+      const minDate = minDateRow?.minDate;
+
+      groupFormat = minDate
+        ? getCustomGroupFormat(minDate, new Date().toISOString())
+        : "%Y-%m-%d"; // no orders at all — format is moot, result will be empty
+    } else {
+      groupFormat = getGroupFormat(period as Period);
+    }
+
+    const dateCondition = buildDateFilter(
+      { period, ...(from && { from }), ...(to && { to }) },
+      order.createdAt,
+    );
+    const conditions = dateCondition
+      ? [...baseConditions, dateCondition]
+      : baseConditions;
 
     const data = await db
       .select({
@@ -78,7 +101,6 @@ export const getRevenueOverTime = async (req: Request, res: Response) => {
         totalRevenue: sql<number>`SUM(CAST(${order.subtotal} AS DECIMAL))`,
         orderCount: sql<number>`COUNT(*)`,
         currency: derivedCurrency,
-        // country: orderUserDetail.country,
       })
       .from(order)
       .innerJoin(orderUserDetail, eq(orderUserDetail.orderId, order.id))
@@ -97,7 +119,7 @@ export const getRevenueOverTime = async (req: Request, res: Response) => {
     );
     return res.status(500).json({
       message: "status 500: Failed to fetch revenue",
-      error: error instanceof Error ? error.message : String(error), // add this temporarily
+      error: error instanceof Error ? error.message : String(error),
     });
   }
 };
@@ -164,7 +186,7 @@ export const getSalesByCountry = async (req: Request, res: Response) => {
 // }
 export const getTopProducts = async (req: Request, res: Response) => {
   try {
-    const { limit = "10" } = req.query as Record<string, string>;
+    const { limit = "5" } = req.query as Record<string, string>;
     const { period, from, to, currency, pgId } = parsePeriodAndCurrency(req);
     // if (!validatePeriod(period)) return periodError(res);
     const dateCondition = buildDateFilter(
@@ -488,5 +510,52 @@ export const getOrdersByCountry = async (req: Request, res: Response) => {
     return res
       .status(500)
       .json({ message: "status 500: Failed to fetch orders by country" });
+  }
+};
+
+export const getTopDeliveryLocations = async (req: Request, res: Response) => {
+  try {
+    const { period, from, to, currency, pgId } = parsePeriodAndCurrency(req);
+
+    const dateCondition = buildDateFilter(
+      { period, ...(from && { from }), ...(to && { to }) },
+      order.createdAt,
+    );
+
+    const conditions: any[] = [
+      eq(order.deletedMode, false),
+      or(eq(order.status, "completed"), eq(order.status, "delivered")),
+    ];
+    if (dateCondition) conditions.push(dateCondition);
+    if (currency) conditions.push(sql`${derivedCurrency} = ${currency}`);
+    if (pgId) conditions.push(eq(order.pricingGroupId, pgId));
+
+    const data = await db
+      .select({
+        location: deliveryLocation.location,
+        totalRevenue: sql<number>`SUM(CAST(${order.subtotal} AS DECIMAL))`,
+        orderCount: sql<number>`COUNT(*)`,
+      })
+      .from(order)
+      .innerJoin(orderUserDetail, eq(orderUserDetail.orderId, order.id))
+      .innerJoin(
+        deliveryLocation,
+        eq(deliveryLocation.id, orderUserDetail.deliveryLocationId),
+      )
+      .where(and(...conditions))
+      .groupBy(deliveryLocation.id, deliveryLocation.location)
+      .orderBy(sql`SUM(CAST(${order.subtotal} AS DECIMAL)) DESC`)
+      .limit(6);
+
+    return res.status(200).json({ period, currency: currency ?? "all", data });
+  } catch (error) {
+    console.error(
+      "getTopDeliveryLocations error:",
+      error instanceof Error ? error.message : error,
+    );
+    return res.status(500).json({
+      message: "status 500: Failed to fetch top delivery locations",
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 };

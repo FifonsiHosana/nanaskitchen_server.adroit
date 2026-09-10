@@ -1,3 +1,4 @@
+import { SQL } from "drizzle-orm";
 import {
   deleteDeliveryLocationById,
   insertDeliveryLocation,
@@ -15,8 +16,12 @@ export interface DeliveryLocationInput {
   discountPercentage?: string | null;
 }
 
-export const listDeliveryLocations = async () => {
-  return selectAllDeliveryLocations();
+export const listDeliveryLocations = async (
+  page: string,
+  pageSize: string,
+  conditions: SQL<unknown>[],
+) => {
+  return selectAllDeliveryLocations({ page, pageSize, conditions });
 };
 
 const normalize = (input: DeliveryLocationInput) => ({
@@ -38,7 +43,9 @@ export const createDeliveryLocation = async (input: DeliveryLocationInput) => {
 
   const existing = await selectDeliveryLocationByName(data.location);
   if (existing) {
-    throw new ValidationError("A delivery location with this name already exists");
+    throw new ValidationError(
+      "A delivery location with this name already exists",
+    );
   }
 
   return insertDeliveryLocation({
@@ -60,7 +67,8 @@ export const updateDeliveryLocation = async (
     if (!data.location) throw new ValidationError("location cannot be empty");
     update.location = data.location;
   }
-  if (input.isFreeDelivery !== undefined) update.isFreeDelivery = data.isFreeDelivery;
+  if (input.isFreeDelivery !== undefined)
+    update.isFreeDelivery = data.isFreeDelivery;
   if (data.price !== undefined) update.price = data.price;
   if (input.discountPercentage !== undefined) {
     update.discountPercentage = data.discountPercentage;

@@ -7,6 +7,7 @@ import { admin } from "../../db/schema";
 
 export interface CustomJwtPayload extends JwtPayload {
   id: string;
+  roleId: number;
 }
 
 export const adminLogin = async (
@@ -40,13 +41,13 @@ export const adminLogin = async (
     }
     //create token
     const accessToken = jwt.sign(
-      { id: user.id },
+      { id: user.id, roleId: user.roleId },
       process.env.JWT_SECRET as string,
       { expiresIn: "3d" }, // short-lived
     );
 
     const refreshToken = jwt.sign(
-      { id: user.id },
+      { id: user.id, roleId: user.roleId },
       process.env.JWT_REFRESH_SECRET as string,
       { expiresIn: "14d" }, // long-lived
     );
@@ -60,7 +61,7 @@ export const adminLogin = async (
         // .header("Authorization", accessToken)
         .status(200)
         .json({
-          user: { name: user.name, email: user.email },
+          user: { name: user.name, email: user.email, roleId: user.roleId },
           accessToken,
         })
     );
@@ -84,7 +85,7 @@ export const refreshToken = async (req: Request, res: Response) => {
     ) as CustomJwtPayload;
 
     const accessToken = jwt.sign(
-      { id: decoded.id },
+      { id: decoded.id, roleId: decoded.roleId },
       process.env.JWT_SECRET as string,
       { expiresIn: "3d" },
     );

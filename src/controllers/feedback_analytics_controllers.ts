@@ -195,7 +195,7 @@ export const getCustomerFeedback = async (req: Request, res: Response) => {
     const attributionCount: Record<string, number> = {};
     attributionAgg.forEach(({ label, count }) => {
       const isKnown = knownChannels.some(
-        (k) => k.toLowerCase() === label.toLowerCase(),
+        (k) => k?.toLowerCase() === label?.toLowerCase(),
       );
       const key = isKnown ? label : "Other";
       attributionCount[key] = (attributionCount[key] ?? 0) + Number(count);

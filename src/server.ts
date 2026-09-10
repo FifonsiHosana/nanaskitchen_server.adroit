@@ -6,6 +6,7 @@ import v2_routes from "./routes/V2/index";
 import { db } from "./models/db_connection";
 import { sql } from "drizzle-orm";
 import cors from "cors";
+// import { seedRoles } from "./role.seed";
 
 const app: Application = express();
 
@@ -68,6 +69,13 @@ const startServer = async () => {
   // seedCountries();
   // seedCurrencies();
   // seedPriceGroup();
+  // seedRoles()
+  //   .then(() => process.exit(0))
+  //   .catch((err) => {
+  //     console.error("Seed failed:", err);
+  //     process.exit(1);
+  //   });
+
   app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
   });
