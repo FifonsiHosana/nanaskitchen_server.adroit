@@ -18,7 +18,9 @@ router.get(
   toggleOrderslock,
 );
 router.get("/lock/status", requirePermission("orders", "see"), OrdersLockCheck);
-router.get("/:status", requirePermission("orders", "see"), getAllOrders);
+// router.get("/:status", requirePermission("orders", "see"), getAllOrders);
+router.get("/:status", getAllOrders);
+
 router.patch(
   "/:id/status",
   audit("orders.updateStatus"),

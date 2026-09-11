@@ -105,7 +105,7 @@ export async function deleteAdmin(adminId: number) {
 export async function selectAllAdmins() {
   const admins = await db
     .select({
-      adminId: admin.id,
+      id: admin.id,
       name: admin.name,
       email: admin.email,
       roleId: roles.id,
@@ -113,9 +113,15 @@ export async function selectAllAdmins() {
       createdAt: admin.createdAt,
     })
     .from(admin)
-    .innerJoin(roles, eq(admin.roleId, roles.id));
+    .leftJoin(roles, eq(admin.roleId, roles.id));
 
   // console.log("Admins fetched from DB:", admins);
 
   return admins;
+}
+
+export async function findAdminByNumericId(id: number) {
+  const [existing] = await db.select().from(admin).where(eq(admin.id, id));
+
+  return existing;
 }

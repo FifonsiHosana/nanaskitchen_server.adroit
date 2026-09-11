@@ -104,7 +104,7 @@ export const getAllOrders = async (req: Request, res: Response) => {
 
     const pgId = pricingGroup ? PRICE_GROUP_IDS[pricingGroup] : undefined;
     if (pgId) conditions.push(eq(order.pricingGroupId, pgId));
-    //for the filter if any odd country -incoming 
+    //for the filter if any odd country -incoming
     const countryToDb: Record<string, string[]> = {
       GH: ["GH", "ghana", "Ghana"],
       US: ["US", "UNITED STATES", "United States of America (the)"],

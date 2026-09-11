@@ -37,7 +37,7 @@ export async function can(
   return permissions[resource]?.[action] ?? false;
 }
 
-/** True when `roleId` belongs to the `admin` role (see `role.seed.ts`). */
+/** True when `roleId` belongs to the `admin` role. */
 export async function isAdminRole(roleId: number | null): Promise<boolean> {
   if (roleId === null) return false;
   const rows = await db.select().from(roles).where(eq(roles.id, roleId));

@@ -514,10 +514,12 @@ export const RESOURCES = [
   "feedback",
   "reviews",
   "shipping",
+  "audit",
 ] as const;
 
 export const rolePermissions = mysqlTable(
-  "role_permissions",  {
+  "role_permissions",
+  {
     roleId: int()
       .notNull()
       .references(() => roles.id, { onDelete: "cascade", onUpdate: "cascade" }),
@@ -528,6 +530,7 @@ export const rolePermissions = mysqlTable(
       "feedback",
       "reviews",
       "shipping",
+      "audit",
     ]).notNull(),
     canSee: boolean().default(false).notNull(),
     canEdit: boolean().default(false).notNull(),
