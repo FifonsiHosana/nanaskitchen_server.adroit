@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1781622810453,
+      "tag": "0000_plain_nightshade",
+      "breakpoints": true
+    }
+  ]
+}
