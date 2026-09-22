@@ -34,6 +34,7 @@ const ROLE_DEFINITIONS: Record<RoleName, PermissionSet> = {
     feedback: full(),
     reviews: full(),
     shipping: full(),
+    audit: readOnly(),
   },
   manager: {
     orders: { see: true, edit: true, delete: false },
@@ -42,6 +43,7 @@ const ROLE_DEFINITIONS: Record<RoleName, PermissionSet> = {
     feedback: readOnly(),
     reviews: readOnly(),
     shipping: { see: true, edit: true, delete: false },
+    audit: readOnly(),
   },
   support: {
     orders: { see: true, edit: true, delete: false },
@@ -50,6 +52,7 @@ const ROLE_DEFINITIONS: Record<RoleName, PermissionSet> = {
     feedback: { see: true, edit: true, delete: false },
     reviews: { see: true, edit: true, delete: false },
     shipping: { see: true, edit: true, delete: false },
+    audit: readOnly(),
   },
   viewer: {
     orders: readOnly(),
@@ -58,6 +61,7 @@ const ROLE_DEFINITIONS: Record<RoleName, PermissionSet> = {
     feedback: readOnly(),
     reviews: readOnly(),
     shipping: readOnly(),
+    audit: readOnly(),
   },
 };
 
@@ -110,5 +114,3 @@ export async function seedRoles() {
 
   console.log("Done.");
 }
-
-

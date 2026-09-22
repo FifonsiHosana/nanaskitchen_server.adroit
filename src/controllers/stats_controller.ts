@@ -34,8 +34,8 @@ export const getStats = async (req: Request, res: Response) => {
     const dateCondition = buildDateFilter(
       {
         period,
-        ...(from && { from }),
-        ...(to && { to }),
+        ...(period === "custom" && from && { from }),
+        ...(period === "custom" && to && { to }),
       },
       order.createdAt,
     );

@@ -35,15 +35,20 @@ export const getCustomPeriodCondition = (
 export const getPeriodCondition = (period: Period, column: AnyColumn): SQL => {
   const map: Record<Period, SQL> = {
     today: sql`DATE(${column}) = CURDATE()`,
-    this_week: sql`${column} >= DATE_SUB(CURDATE(), INTERVAL DAYOFWEEK(CURDATE()) - 2 DAY)
-  AND ${column} < DATE_ADD(CURDATE(), INTERVAL 9 - DAYOFWEEK(CURDATE()) DAY)`,
+    // ISO week comparison — immune to the Sunday=1 DAYOFWEEK() edge case entirely
+    this_week: sql`YEARWEEK(${column}, 3) = YEARWEEK(CURDATE(), 3)`,
     this_month: sql`YEAR(${column}) = YEAR(NOW()) AND MONTH(${column}) = MONTH(NOW())`,
     last_month: sql`YEAR(${column}) = YEAR(DATE_SUB(NOW(), INTERVAL 1 MONTH)) AND MONTH(${column}) = MONTH(DATE_SUB(NOW(), INTERVAL 1 MONTH))`,
     this_year: sql`YEAR(${column}) = YEAR(NOW())`,
     last_year: sql`YEAR(${column}) = YEAR(NOW()) - 1`,
     all_time: sql`1=1`,
   };
-  return map[period];
+
+  const condition = map[period];
+  if (!condition) {
+    throw new Error(`Unknown period: "${period}"`);
+  }
+  return condition;
 };
 
 export const getGroupFormat = (period: Period): string => {
@@ -93,7 +98,7 @@ export const buildDateFilter = (
 ): SQL | undefined => {
   const { period, from, to } = params;
 
-  if (from || to) {
+  if (period === "custom") {
     if (from && !isValidDate(from)) throw new Error("Invalid from date");
     if (to && !isValidDate(to)) throw new Error("Invalid to date");
 
