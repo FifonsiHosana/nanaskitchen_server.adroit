@@ -9,8 +9,14 @@ export function audit(action: string) {
 
       const now = new Date().toISOString().slice(0, 19).replace("T", " ");
 
+      // req.userId is only set behind authMiddleware. On public routes
+      // (e.g. auth.login) it is undefined — Number(undefined) is NaN, and
+      // `??` does NOT catch NaN, so guard with Number.isFinite instead.
+      const rawId = Number(req.userId);
+      const adminId = Number.isFinite(rawId) ? rawId : null;
+
       const entry: typeof auditLogs.$inferInsert = {
-        adminId: Number(req.userId) ?? null,
+        adminId,
         action,
         resourceId: typeof req.params.id === "string" ? req.params.id : null,
         statusCode: res.statusCode,
