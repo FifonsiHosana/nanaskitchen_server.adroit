@@ -341,3 +341,30 @@ export const applyTiersToFlavors = async (req: Request, res: Response) => {
     return res.status(500).json({ message: "Apply failed", error });
   }
 };
+
+// ── 4. DELETE /price-list/tiers/:id ──────────────────────────────────────────
+// Delete a single price tier by id
+export const deletePriceTier = async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ message: "Valid tier id is required" });
+    }
+
+    const [existing] = await db
+      .select({ id: pricingTiers.id })
+      .from(pricingTiers)
+      .where(eq(pricingTiers.id, id));
+
+    if (!existing) {
+      return res.status(404).json({ message: "Price tier not found" });
+    }
+
+    await db.delete(pricingTiers).where(eq(pricingTiers.id, id));
+
+    return res.status(200).json({ message: "Price tier deleted", id });
+  } catch (error) {
+    console.error("deletePriceTier error:", error);
+    return res.status(500).json({ message: "Failed to delete price tier" });
+  }
+};

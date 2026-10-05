@@ -5,7 +5,13 @@
 //edit endpoint for locations
 
 import { eq } from "drizzle-orm";
-import { countries, currency, deliveryLocation } from "../../db";
+import {
+  countries,
+  countryProductSettings,
+  currency,
+  deliveryLocation,
+  product,
+} from "../../db";
 import { db } from "../models/db_connection";
 import { Request, Response } from "express";
 
@@ -40,11 +46,33 @@ export const addCountry = async (req: Request, res: Response) => {
       });
     }
 
-    const newCountry = await db
-      .insert(countries)
-      .values({ countryCode: country_code, countryLabel: country_label });
+    const result = await db.transaction(async (tx) => {
+      const existingProducts = await db
+        .select({ productId: product.id })
+        .from(product);
 
-    return res.status(201).json(newCountry);
+      const [newCountry] = await tx
+        .insert(countries)
+        .values({
+          countryCode: country_code,
+          countryLabel: country_label,
+        })
+        .$returningId();
+
+      const countryId = newCountry.id;
+      await tx.insert(countryProductSettings).values(
+        existingProducts.map(({ productId }) => ({
+          countryId: countryId,
+          outOfStock: false,
+          productId,
+          visible: true,
+        })),
+      );
+
+      return newCountry;
+    });
+
+    return res.status(201).json(result);
   } catch (error) {
     return res.status(500).json({ error: `Internal Server Error: ${error}` });
   }

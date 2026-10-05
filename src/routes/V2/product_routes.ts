@@ -16,6 +16,7 @@ import {
 import { seedVariantIds } from "../../controllers/V2/seed_controllers_2";
 import {
   applyTiersToFlavors,
+  deletePriceTier,
   previewApplyTiers,
 } from "../../controllers/V2/price_tiers_controllers";
 import {
@@ -106,6 +107,12 @@ router.patch(
   audit("priceTier.update"),
   requirePermission("products", "edit"),
   updatePriceTiers,
+);
+router.delete(
+  "/price-list/tiers/:id",
+  audit("priceTier.delete"),
+  requirePermission("products", "edit"),
+  deletePriceTier,
 );
 router.get(
   "/price-list/tiers/preview-apply",
